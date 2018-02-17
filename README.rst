@@ -10,7 +10,7 @@ Installation
 
 Install from this repository::
 
-	git clone https://github.com/thomasZen/python_kaldi_features
+	git clone https://github.com/thomasZen/python_speech_features2
 	python setup.py install
 
 Usage
@@ -19,7 +19,10 @@ Usage
 Example for creating normalized logmel and delta features. This procedure is tested for CTC-based speech recognition on Tedlium.
 
 .. code-block:: python
-
+	
+	import librosa
+	import numpy
+	from python_speech_features import logfbank, calculate_delta, normalize
 	y, sr = librosa.load("english.wav", sr=16000)
 	logmel = logfbank(y, samplerate=sr)
 	delta = calculate_delta(logmel)
