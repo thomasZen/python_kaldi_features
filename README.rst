@@ -23,6 +23,7 @@ Example for creating normalized logmel and delta features. This procedure is tes
 	import librosa
 	import numpy
 	from python_speech_features import logfbank, calculate_delta, normalize
+	
 	y, sr = librosa.load("english.wav", sr=16000)
 	logmel = logfbank(y, samplerate=sr)
 	delta = calculate_delta(logmel)
