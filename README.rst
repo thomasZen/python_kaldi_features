@@ -1,58 +1,36 @@
+======================
+python_speech_features2
+======================
+
+This library provides common speech features for ASR including MFCCs and filterbank energies.
+It is a fork of `<https://github.com/jameslyons/python_speech_features>`_ and `<https://github.com/ZitengWang/python_kaldi_features>`_
+
+Installation
+============
+
+	git clone https://github.com/thomasZen/python_kaldi_features
+	python setup.py install
+
+Usage
+=====
+
+Example for creating normalized logmel and delta features. This procedure is tested for CTC-based speech recognition on Tedlium.
+
+	python
+	y, sr = librosa.load("english.wav", sr=16000)
+
+    logmel = logfbank(y, samplerate=sr)
+    delta = calculate_delta(logmel)
+    features = numpy.concatenate([logmel, delta], axis=1)
+
+    features = normalize(features)
 
 
-forked from `<https://github.com/jameslyons/python_speech_features>`_
+Changes
+=========
+Changes compared to `<https://github.com/ZitengWang/python_kaldi_features>`_:
 
-check the readme therein for the usages
-
-It has been modified to produce the same results as with the compute-mfcc-feats and compute-fbank-feats (default parameters) commands in Kaldi.
- 
--------------------------------
-
-The compute-mfcc-feats pipeline:
-
-src/featbin/Compute-mfcc-feats.cc
-    
-    Mfcc mfcc(mfcc_opts)  --> src/feat/Feature-mfcc.h
-    
-                                 struct MfccOptions
-                                 
-                                 typedef OfflineFeatureTpl<MfccComputer> Mfcc --> src/feat/Feature-common.h
-           
-                                 MfccComputer()  --> src/feat/Feature-mfcc.cc
-                                 
-                                                         ComputeDctMatrix()  --> src/matrix/Matrix-functions.cc
-                                                         
-                                                         ComputeLifterCoeffs()  --> src/feat/Mel-computations.cc
-  
-    
-    for each utterance:
-    mfcc.ComputeFeatures()
-
-src/feat/Feature-common-inl.h
-
-    OfflineFeatureTpl<F>::ComputeFeatures()
-    
-        Compute()
-        
-            ExtractWindow()  --> src/feat/Feature-window.cc
-                                     
-                                     ProcessWindow()
-                                         
-                                         Dither, remove_dc_offset, log_energy_pre_window, Preemphasize, window
-            
-            computer_.Compute() --> src/feat/Feature-mfcc.cc
-               
-                                      MfccComputer::Compute()
-                                      
-                                          const MelBanks &mel_banks --> Mel-computations.cc
-                                          
-                                          srfft_
-                                        
-                                          ComputerPowerSpectrum()
-                                          
-                                          mel_banks.Compute()
-                                          
-                                          mel_energies_.ApplyLog()
-                                          
-                                          dct, cepstral_lifter
-                                          
+    - Added normalize function
+    - Rewrote delta calculation
+    - Changed default parameters
+    - Cleanup and documentation

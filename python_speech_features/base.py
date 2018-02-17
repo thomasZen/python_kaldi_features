@@ -5,6 +5,7 @@ import numpy
 from python_speech_features import sigproc
 from scipy.fftpack import dct
 
+
 def mfcc(signal,samplerate=16000,winlen=0.025,winstep=0.01,numcep=13,
          nfilt=23,nfft=512,lowfreq=20,highfreq=None,dither=1.0,remove_dc_offset=True,preemph=0.97,
          ceplifter=22,useEnergy=True,wintype='povey'):
@@ -31,6 +32,7 @@ def mfcc(signal,samplerate=16000,winlen=0.025,winstep=0.01,numcep=13,
     feat = lifter(feat,ceplifter)
     if useEnergy: feat[:,0] = numpy.log(energy) # replace first cepstral coefficient with log of frame energy
     return feat
+
 
 def fbank(signal,samplerate=16000,winlen=0.025,winstep=0.01,
           nfilt=40,nfft=512,lowfreq=0,highfreq=None,dither=1.0,remove_dc_offset=True, preemph=0.97, 
@@ -63,8 +65,9 @@ def fbank(signal,samplerate=16000,winlen=0.025,winstep=0.01,
 
     return feat,energy
 
-def logfbank(signal,samplerate=16000,winlen=0.025,winstep=0.01,
-          nfilt=40,nfft=512,lowfreq=64,highfreq=None,dither=1.0,remove_dc_offset=True,preemph=0.97,wintype='hamming'):
+
+def logfbank(signal, samplerate=16000, winlen=0.025, winstep=0.01, nfilt=40, nfft=512, lowfreq=20,
+             highfreq=None, dither=1.52587890625e-05, remove_dc_offset=True, preemph=0.97, wintype='povey'):
     """Compute log Mel-filterbank energy features from an audio signal.
 
     :param signal: the audio signal from which to compute features. Should be an N*1 array
@@ -75,7 +78,10 @@ def logfbank(signal,samplerate=16000,winlen=0.025,winstep=0.01,
     :param nfft: the FFT size. Default is 512.
     :param lowfreq: lowest band edge of mel filters. In Hz, default is 0.
     :param highfreq: highest band edge of mel filters. In Hz, default is samplerate/2
+    :param dither: default = 1/2^{16}
+    :param remove_dc_offset: remove dc offset or not
     :param preemph: apply preemphasis filter with preemph as coefficient. 0 is no filter. Default is 0.97.
+    :param wintype: window type
     :returns: A numpy array of size (NUMFRAMES by nfilt) containing features. Each row holds 1 feature vector.
     """
     feat,energy = fbank(signal,samplerate,winlen,winstep,nfilt,nfft,lowfreq,highfreq,dither, remove_dc_offset,preemph,wintype)
@@ -132,6 +138,7 @@ def get_filterbanks(nfilt=26,nfft=512,samplerate=16000,lowfreq=0,highfreq=None):
                     fbank[j,i]=(rightmel-mel)/(rightmel-centermel)
     return fbank
 
+
 def lifter(cepstra, L=22):
     """Apply a cepstral lifter the the matrix of cepstra. This has the effect of increasing the
     magnitude of the high frequency DCT coeffs.
@@ -148,19 +155,33 @@ def lifter(cepstra, L=22):
         # values of L <= 0, do nothing
         return cepstra
 
-def delta(feat, N):
-    """Compute delta features from a feature vector sequence.
 
-    :param feat: A numpy array of size (NUMFRAMES by number of features) containing features. Each row holds 1 feature vector.
-    :param N: For each frame, calculate delta features based on preceding and following N frames
-    :returns: A numpy array of size (NUMFRAMES by number of features) containing delta features. Each row holds 1 delta feature vector.
-    """
-    if N < 1:
-        raise ValueError('N must be an integer >= 1')
-    NUMFRAMES = len(feat)
-    denominator = 2 * sum([i**2 for i in range(1, N+1)])
-    delta_feat = numpy.empty_like(feat)
-    padded = numpy.pad(feat, ((N, N), (0, 0)), mode='edge')   # padded version of feat
-    for t in range(NUMFRAMES):
-        delta_feat[t] = numpy.dot(numpy.arange(-N, N+1), padded[t : t+2*N+1]) / denominator   # [t : t+2*N+1] == [(N+t)-N : (N+t)+N+1]
-    return delta_feat
+def calculate_delta(feature, window_size=2):
+    result = numpy.empty_like(feature)
+    kernel = -numpy.array(range(-window_size, window_size+1))
+    sum2 = float(sum([x*x for x in kernel]))
+
+    for i in range(len(feature[0,:])):
+        # pad the desired mel bank
+        padded = numpy.pad(feature[:, i], ((window_size, window_size)), mode="edge")
+        # write
+        result[:, i] = numpy.convolve(padded, kernel, mode="valid") / sum2
+    return result
+
+
+def normalize(y, axis=0, variance=True):
+    # y.shape = (steps, features)
+    sequence = y.astype("float32")
+
+    # zero mean
+    mean = sequence.mean(axis=axis)
+    sequence -= mean
+
+    if variance:
+        # unit Variance
+        standard_deviation = sequence.std(axis=axis)
+        standard_deviation = numpy.maximum(standard_deviation, numpy.finfo(numpy.float32).eps)
+        sequence /= standard_deviation
+
+    return sequence
+

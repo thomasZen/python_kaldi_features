@@ -1,13 +1,16 @@
 #!/usr/bin/env python
 
-from python_speech_features import mfcc
-from python_speech_features import delta
-from python_speech_features import logfbank
-import scipy.io.wavfile as wav
+import librosa
+import numpy
+from python_speech_features import logfbank, calculate_delta, normalize
 
-(rate,sig) = wav.read("english.wav")
+y, sr = librosa.load("english.wav", sr=16000)
 
-fbank_feat = logfbank(sig,dither=0)
-
-mfcc_feat = mfcc(sig,dither=0,useEnergy=False,wintype='povey')
-
+# calculate log mel features
+logmel = logfbank(y, sr)
+# add delta
+delta = calculate_delta(logmel)
+features = numpy.concatenate([logmel, delta], axis=1)
+# normalize
+features = normalize(features)
+print(features.shape)
