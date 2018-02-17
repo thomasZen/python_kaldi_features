@@ -8,6 +8,8 @@ It is a fork of `<https://github.com/jameslyons/python_speech_features>`_ and `<
 Installation
 ============
 
+Install from this repository::
+
 	git clone https://github.com/thomasZen/python_kaldi_features
 	python setup.py install
 
@@ -16,21 +18,20 @@ Usage
 
 Example for creating normalized logmel and delta features. This procedure is tested for CTC-based speech recognition on Tedlium.
 
-	python
+.. code-block:: python
+
 	y, sr = librosa.load("english.wav", sr=16000)
-
-    logmel = logfbank(y, samplerate=sr)
-    delta = calculate_delta(logmel)
-    features = numpy.concatenate([logmel, delta], axis=1)
-
-    features = normalize(features)
+	logmel = logfbank(y, samplerate=sr)
+	delta = calculate_delta(logmel)
+	features = numpy.concatenate([logmel, delta], axis=1)
+	features = normalize(features)
 
 
 Changes
 =========
 Changes compared to `<https://github.com/ZitengWang/python_kaldi_features>`_:
 
-    - Added normalize function
-    - Rewrote delta calculation
-    - Changed default parameters
-    - Cleanup and documentation
+- Added normalize function
+- Rewrote delta calculation
+- Changed default parameters
+- Cleanup and documentation
