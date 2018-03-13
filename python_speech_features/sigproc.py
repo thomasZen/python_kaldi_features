@@ -34,7 +34,7 @@ def framesig(sig, frame_len, frame_step, dither=1.0, preemph=0.97, remove_dc_off
     if slen <= frame_len:
         numframes = 1
     else:
-        numframes = 1 + (( slen - frame_len) / frame_step)
+        numframes = 1 + (( slen - frame_len) // frame_step)
 
     # check kaldi/src/feat/feature-window.h
     padsignal = sig[:(numframes-1)*frame_step+frame_len]
@@ -58,7 +58,8 @@ def framesig(sig, frame_len, frame_step, dither=1.0, preemph=0.97, remove_dc_off
     raw_frames = numpy.zeros(frames.shape)
     for frm in range(frames.shape[0]):
         frames[frm,:] = do_dither(frames[frm,:], dither)        # dither
-        frames[frm,:] = do_remove_dc_offset(frames[frm,:])      # remove dc offset
+        if remove_dc_offset:
+            frames[frm,:] = do_remove_dc_offset(frames[frm,:])      # remove dc offset
         raw_frames[frm,:] = frames[frm,:]
         frames[frm,:] = do_preemphasis(frames[frm,:], preemph)    # preemphasize
 
